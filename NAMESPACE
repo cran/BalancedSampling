@@ -1,0 +1,3 @@
+useDynLib(BalancedSampling)
+exportPattern("^[[:alpha:]]+")
+importFrom(Rcpp, evalCpp)
