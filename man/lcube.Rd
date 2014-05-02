@@ -5,7 +5,7 @@
 Local cube method (Doubly balanced sampling)
 }
 \description{
-Select doubly balanced samples with prescribed inclusion probabilities from a finite population. To have a fixed sample size, include the inclusion probabilities as a balancing variable in \code{Xbal} and make sure the inclusion probabilities sum to a positive integer. This is a simplified (optimized for speed) implementation of the local cube method (doubly balanced sampling). Landing is done by supression of balancing variables (from rightmost column, so keep inclusion probabilities in first column to guarantee fixed size). Euclidean distance is used in the \code{Xspread} space.
+Select doubly balanced samples with prescribed inclusion probabilities from a finite population. To have a fixed sample size, include the inclusion probabilities as a balancing variable in \code{Xbal} and make sure the inclusion probabilities sum to a positive integer. This is a simplified (optimized for speed) implementation of the local cube method (doubly balanced sampling). Landing is done by dropping balancing variables (from rightmost column, so keep inclusion probabilities in first column to guarantee fixed size). Euclidean distance is used in the \code{Xspread} space.
 }
 \usage{
 lcube(prob,Xspread,Xbal)	

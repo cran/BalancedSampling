@@ -5,7 +5,7 @@
 Cube method (Balanced sampling)
 }
 \description{
-This is a fast implementation of the cube method. To have a fixed sample size, include the inclusion probabilities as a balancing variable in \code{Xbal} and make sure the inclusion probabilities sum to a positive integer. Landing is done by supression of balancing variables (from rightmost column, so keep inclusion probabilities in first column to guarantee fixed size). 
+This is a fast implementation of the cube method. To have a fixed sample size, include the inclusion probabilities as a balancing variable in \code{Xbal} and make sure the inclusion probabilities sum to a positive integer. Landing is done by dropping balancing variables (from rightmost column, so keep inclusion probabilities in first column to guarantee fixed size). 
 }
 \usage{
 cube(prob,Xbal)	

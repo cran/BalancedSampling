@@ -2,7 +2,7 @@
 \alias{spm}
 \docType{package}
 \title{
-Sequential pivotal method
+Sequential pivotal method (also known as ordered pivotal sampling and Deville's systematic sampling)
 }
 \description{
 Select samples with prescribed inclusion probabilities from a finite population. The resulting samples are well spread in the list (similar to systematic sampling). In each of the (at most) N steps, two undecided units with smallest index are selected to compete.
@@ -18,6 +18,8 @@ Returns a vector of selected indexes in 1,2,...,N. If the inclusion probabilitie
 }
 \references{
 Deville, J.-C. and  Tillé, Y. (1998). Unequal probability sampling without replacement through a splitting method. Biometrika 85, 89-101.
+
+Chauvet, G. (2012). On a characterization of ordered pivotal sampling. Bernoulli, 18(4), 1320-1340.
 }
 \examples{
 \dontrun{

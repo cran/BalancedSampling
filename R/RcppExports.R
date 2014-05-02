@@ -9,6 +9,30 @@ lcube <- function(prob, Xspread, Xbal) {
     .Call('BalancedSampling_lcube', PACKAGE = 'BalancedSampling', prob, Xspread, Xbal)
 }
 
+flightphase <- function(prob, Xbal) {
+    .Call('BalancedSampling_flightphase', PACKAGE = 'BalancedSampling', prob, Xbal)
+}
+
+landingphase <- function(prob, probflight, Xbal) {
+    .Call('BalancedSampling_landingphase', PACKAGE = 'BalancedSampling', prob, probflight, Xbal)
+}
+
+lcubeflightphase <- function(prob, Xspread, Xbal) {
+    .Call('BalancedSampling_lcubeflightphase', PACKAGE = 'BalancedSampling', prob, Xspread, Xbal)
+}
+
+lcubelandingphase <- function(prob, probflight, Xspread, Xbal) {
+    .Call('BalancedSampling_lcubelandingphase', PACKAGE = 'BalancedSampling', prob, probflight, Xspread, Xbal)
+}
+
+cubestratified <- function(prob, Xbal, integerStrata) {
+    .Call('BalancedSampling_cubestratified', PACKAGE = 'BalancedSampling', prob, Xbal, integerStrata)
+}
+
+lcubestratified <- function(prob, Xspread, Xbal, integerStrata) {
+    .Call('BalancedSampling_lcubestratified', PACKAGE = 'BalancedSampling', prob, Xspread, Xbal, integerStrata)
+}
+
 lpm <- function(prob, x, h) {
     .Call('BalancedSampling_lpm', PACKAGE = 'BalancedSampling', prob, x, h)
 }

@@ -16,19 +16,19 @@ Maintainer: Anton Grafström <anton.grafstrom@gmail.com>
 Webpage: http://www.antongrafstrom.se/balancedsampling
 }
 \references{
-Grafström, A. and Schelin, L. (2014). How to select representative samples. Scandinavian Journal of Statistics.
-
-Grafström, A. and Lundström, N.L.P. (2013). Why well spread probability samples are balanced. Open Journal of Statistics, 3(1).
-
-Grafström, A., Lundström, N.L.P. and Schelin, L. (2012). Spatially balanced sampling through the Pivotal method. Biometrics 68(2), 514-520.
-
-Grafström, A. (2012). Spatially correlated Poisson sampling. Journal of Statistical Planning and Inference, 142(1), 139-147.
-
-Grafström, A. and Tillé, Y. (2013). Doubly balanced spatial sampling with spreading and restitution of auxiliary totals. Environmetrics, 24(2), 120-131.
-
 Deville, J. C. and  Tillé, Y. (2004). Efficient balanced sampling: the cube method. Biometrika, 91(4), 893-912.
 
 Deville, J.-C. and  Tillé, Y. (1998). Unequal probability sampling without replacement through a splitting method. Biometrika 85, 89-101.
+
+Grafström, A. (2012). Spatially correlated Poisson sampling. Journal of Statistical Planning and Inference, 142(1), 139-147.
+
+Grafström, A. and Lundström, N.L.P. (2013). Why well spread probability samples are balanced. Open Journal of Statistics, 3(1).
+
+Grafström, A. and Schelin, L. (2014). How to select representative samples. Scandinavian Journal of Statistics.
+
+Grafström, A., Lundström, N.L.P. and Schelin, L. (2012). Spatially balanced sampling through the Pivotal method. Biometrics 68(2), 514-520.
+
+Grafström, A. and Tillé, Y. (2013). Doubly balanced spatial sampling with spreading and restitution of auxiliary totals. Environmetrics, 24(2), 120-131.
 }
 \keyword{ sampling }
 \examples{

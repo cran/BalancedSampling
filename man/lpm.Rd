@@ -13,7 +13,7 @@ lpm(prob,x,h)
 \arguments{
   \item{prob}{vector of length N with inclusion probabilities}
   \item{x}{matrix of (standardized) auxiliary variables of N rows and q columns}
-  \item{h}{positive integer, size of window to search for nearest neighbor}
+  \item{h}{positive integer, size of window in the list to search for nearest neighbor}
 }
 \value{
 Returns a vector of selected indexes in 1,2,...,N. If the inclusion probabilities sum to n, where n is integer, then the sample size is fixed (n).
