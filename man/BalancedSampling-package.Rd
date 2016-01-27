@@ -3,13 +3,13 @@
 \alias{BalancedSampling}
 \docType{package}
 \title{
-Balanced and spatially balanced sampling
+Balanced and Spatially Balanced Sampling
 }
 \description{
-This package includes methods that can select balanced and spatially balanced probability samples in multi-dimensional spaces with any prescribed inclusion probabilities. It contains fast (C++ via Rcpp) implementations of the included sampling methods. The local pivotal method and spatially correlated Poisson sampling (for spatially balanced sampling) are included. Also the cube method (for balanced sampling) and the local cube method (for doubly balanced sampling) are included. 
+Select balanced and spatially balanced probability samples in multi-dimensional spaces with any prescribed inclusion probabilities. It contains fast (C++ via Rcpp) implementations of the included sampling methods. The local pivotal method and spatially correlated Poisson sampling (for spatially balanced sampling) are included. Also the cube method (for balanced sampling) and the local cube method (for doubly balanced sampling) are included. 
 }
 \author{
-Anton Grafström
+Anton Grafström, Jonathan Lisic
 
 Maintainer: Anton Grafström <anton.grafstrom@gmail.com>
 

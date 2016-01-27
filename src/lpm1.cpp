@@ -3,7 +3,7 @@ using namespace Rcpp;
 
 //**********************************************
 // Author: Anton Grafström
-// Last edit: 2014-03-18 
+// Last edit: 2014-12-16 
 // Licence: GPL (>=2)
 //**********************************************
 
@@ -67,8 +67,8 @@ NumericVector lpm1(NumericVector prob, NumericMatrix x){
 					}
 				}
 			}
-			// found if equal mindist
-			if( abs(mindist-mindist2) < 1e-6 ){found=1;}else{ri=rj;}
+			// found if equal mindist (changed from abs to fabs)
+			if( fabs(mindist-mindist2) < 1e-6 ){found=1;}else{ri=rj;}
 		}
 		a = p[index[ri]]+p[index[rj]];
 		if(a > 1){

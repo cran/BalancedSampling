@@ -3,7 +3,7 @@ using namespace Rcpp;
 
 //**********************************************
 // Author: Anton Grafström
-// Last edit: 2014-04-13 
+// Last edit: 2014-05-05
 // Licence: GPL (>=2)
 //**********************************************
 
@@ -58,63 +58,41 @@ void rref(NumericMatrix& M){
   return;
 }
 
-// one step fast flight cube (use rref to find Nullspace vector)
+// one step fast flight cube
 NumericVector onestepfastflightcube(NumericVector prob, NumericMatrix Bm){
   int ncol = Bm.ncol();
 	int nrow = Bm.nrow();
 	int i, j;
-
+  NumericVector u(ncol,0.0);
+  IntegerVector uset(ncol,0);
 	double la1 = 1e+200;
 	double la2 = 1e+200;
-	double la, eps = 1e-11;
+	double la, eps = 1e-9;
   int lead;
-  double v, free = 1.0;
-  NumericVector u(nrow,0.0);
-  IntegerVector uset(nrow,0);
-  NumericVector p(nrow);
-  NumericMatrix B(ncol,nrow);
-  for(i=0;i<nrow;i++){
-    for(j=0;j<ncol;j++){
-      B(j,i) = Bm(i,j);
-    }
-    p[i] = prob[i];
-  }
-  nrow = B.nrow();
-  ncol = B.ncol();
+  double v, free = -1.0;
 	// find nonzero vector u in Ker B (null space of B, i.e. Bu = 0)
 	// with both positive and negative values
 	// find reduced row echelon form of B
-	rref(B);
-  
+	rref(Bm);
 	for(i=(nrow-1);i>=0;i--){
 		// find lead (first nonzero entry on row) if exists
 		// if no lead, i.e lead = ncol, do nothing
 		// if lead, the variables after are either set or free
 		// free variables are alternately set to 1 or -1 
 		lead = 0;
-		for(j=0;j<ncol;j++){
-      if(B(i,j)==0.0){
-        lead++;
-      }else{
-        break;
-      }
-    }
+		for(j=0;j<ncol;j++){if(Bm(i,j)==0.0){lead++;}else{break;}}
 		// lead found
 		if(lead<ncol){
-			v = 0;
+			v = 0.0;
 			for(j=lead+1;j<ncol;j++){
 				if( uset[j] == 0 ){
           uset[j] = 1;
 					free *= -1.0;
 					u[j] = free;
 				}
-				v -= u[j]*B(i,j);		
+				v -= u[j]*Bm(i,j);		
 			}
-      /*if(uset[lead]==1){
-        print(B);
-        print("Lead already set.");
-      }*/
-			u[lead] = v/B(i,lead);
+			u[lead] = v/Bm(i,lead);
       uset[lead] = 1;
 		}
 	}
@@ -127,176 +105,42 @@ NumericVector onestepfastflightcube(NumericVector prob, NumericMatrix Bm){
 	}
 	// find lambda1 and lambda2
 	for(i=0;i<ncol;i++){
-		if(u[i] > 0.0){
-        la1 = std::min(la1,(1.0-p[i])/u[i]);
-        la2 = std::min(la2,p[i]/u[i]);
+		if(u[i]>0){
+			la1 = std::min(la1,(1-prob[i])/u[i]);
+			la2 = std::min(la2,prob[i]/u[i]);
 		}
-		if(u[i] < 0.0){
-        la1 = std::min(la1,-p[i]/u[i]);
-        la2 = std::min(la2,(p[i]-1.0)/u[i]);		
+		if(u[i]<0){
+			la1 = std::min(la1,-prob[i]/u[i]);
+			la2 = std::min(la2,(prob[i]-1)/u[i]);					
 		}
 	}
 	// random choice of p+lambda1*u and p-lambda2*u
-	if(runif(1)[0] < la2/(la1+la2)){
+	if(runif(1)[0]<la2/(la1+la2)){
 		la = la1;
 	}else{
 		la = -la2;
 	}
 	// update prob
 	for(i=0;i<ncol;i++){
-			p[i] = prob[i] + la * u[i];
-			if(p[i] < eps){ p[i] = 0; }
-			if(p[i] > 1-eps){ p[i] = 1; }
+			prob[i] = prob[i] + la * u[i];
+			if(prob[i] < eps){ prob[i] = 0; }
+			if(prob[i] > 1-eps){ prob[i] = 1; }
 	}
-  /*double diff = abs(sum(p)-sum(prob));
-  if(diff > 1e-6){
-    print( "Difference is larger than 1e-6");
-  }*/
-	return p;	
+	return prob;	
 }
 
 
-/*
-Function svd("svd");
-NumericMatrix svd_u(NumericMatrix X){
-  List s = svd(_["x"]=X, _["nu"]=X.ncol(), _["nv"]=0);
-  return as<NumericMatrix>(s[1]);
-}
-
-// one step fast flight cube (use svd to find Nullspace vector)
-// [[Rcpp::export]]
-NumericVector onestepfastflightcube3(NumericVector prob, NumericMatrix Bm){
-  int ncol = Bm.ncol();
-	int nrow = Bm.nrow();
-	int i, j;
-	double la1 = 1e+200;
-	double la2 = 1e+200;
-	double la, eps = 1e-11;
-  NumericVector p(nrow);
-  NumericMatrix B(nrow,ncol+1);
-  for(i=0;i<nrow;i++){
-    for(j=0;j<ncol;j++){
-      B(i,j) = Bm(i,j);
-    }
-    B(i,ncol) = 0;
-    p[i] = prob[i];
-  }
-  NumericMatrix U = svd_u(B);
-  //NumericMatrix U = B_kern(B);
-	// find lambda1 and lambda2
-	for(i=0;i<nrow;i++){
-		if(U(i,ncol)>eps){
-      if((1.0-p[i])/U(i,ncol)>0.0){
-        la1 = std::min(la1,(1.0-p[i])/U(i,ncol));
-      }
-			if(p[i]/U(i,ncol)>0.0){
-        la2 = std::min(la2,p[i]/U(i,ncol));
-			}
-			
-		}
-		if(U(i,ncol)<-eps){
-      if(-p[i]/U(i,ncol)>0.0){
-        la1 = std::min(la1,-p[i]/U(i,ncol));
-      }
-			if((p[i]-1.0)/U(i,ncol)>0.0){
-        la2 = std::min(la2,(p[i]-1.0)/U(i,ncol));
-			}					
-		}
-	}
-	// random choice of p+lambda1*u and p-lambda2*u
-	if(runif(1)[0]<la2/(la1+la2)){
-		la = la1;
-	}else{
-		la = -la2;
-	}
-	// update prob
-	for(i=0;i<nrow;i++){
-			p[i] = p[i] + la * U(i,ncol);
-			if(p[i] < eps){ p[i] = 0; }
-			if(p[i] > 1-eps){ p[i] = 1; }
-	}
-	return p;	
-}
-
-// "import" qr and qr.Q
-Function qr_R("qr");
-Function qr_Q("qr.Q");
-
-// [[Rcpp::export]]
-NumericMatrix QR_u(NumericMatrix X){
-  List QR = qr_R(X);
-  NumericMatrix Q = as<NumericMatrix>(qr_Q(_["qr"]=QR, _["complete"]=1));
-  return Q;
-} 
-
-// one step fast flight cube (use QR decomposition to find Nullspace vector)
-// [[Rcpp::export]]
-NumericVector onestepfastflightcube2(NumericVector prob, NumericMatrix Bm){
-  int ncol = Bm.ncol();
-  int nrow = Bm.nrow();
-	int i, j;
-	double la1 = 1e+200;
-	double la2 = 1e+200;
-	double la, eps = 1e-11;
-  NumericVector p(nrow);
-  NumericMatrix B(nrow,ncol);
-  for(i=0;i<nrow;i++){
-    for(j=0;j<ncol;j++){
-      B(i,j) = Bm(i,j);
-    }
-    p[i] = prob[i];
-  }
-  NumericMatrix U = QR_u(B);
-	// find lambda1 and lambda2
-	for(i=0;i<nrow;i++){
-		if(U(i,ncol)>eps){
-      if((1.0-p[i])/U(i,ncol)>0.0){
-        la1 = std::min(la1,(1.0-p[i])/U(i,ncol));
-      }
-			if(p[i]/U(i,ncol)>0.0){
-        la2 = std::min(la2,p[i]/U(i,ncol));
-			}	
-		}
-		if(U(i,ncol)<-eps){
-      if(-p[i]/U(i,ncol)>0.0){
-        la1 = std::min(la1,-p[i]/U(i,ncol));
-      }
-			if((p[i]-1.0)/U(i,ncol)>0.0){
-        la2 = std::min(la2,(p[i]-1.0)/U(i,ncol));
-			}					
-		}
-	}
-	// random choice of p+lambda1*u and p-lambda2*u
-	if(runif(1)[0]<la2/(la1+la2)){
-		la = la1;
-	}else{
-		la = -la2;
-	}
-	// update prob
-	for(i=0;i<nrow;i++){
-			p[i] = p[i] + la * U(i,ncol);
-			if(p[i] < eps){ p[i] = 0; }
-			if(p[i] > 1-eps){ p[i] = 1; }
-	}
-	return p;	
-}
-*/
-
-// fixad
 // [[Rcpp::export]]
 IntegerVector cube(NumericVector prob, NumericMatrix Xbal){
   // landing by dropping balancing variables, 
 	// starting from the column with largest index.	  
   int N = prob.size();
-  int naux = Xbal.ncol();
- 
+  int naux = Xbal.ncol(); 
   IntegerVector index(N);
   NumericVector p(N);
   int i,j,k,howmany;
   for(i=0;i<N;i++){index[i]=i; p[i]=prob[i];}  
-  //IntegerVector index_small;
-  //NumericVector p_small, dists;
-  //NumericMatrix B;
+
   double eps = 1e-12;
   int done = 0, tempInt, howlong;
   // randomize order of index list
@@ -324,11 +168,11 @@ IntegerVector cube(NumericVector prob, NumericMatrix Xbal){
       NumericVector p_small(howmany);
       NumericVector dists(howmany,1e+200);
       IntegerVector index_small(howmany);
-      NumericMatrix B(howmany,howmany-1);       
+      NumericMatrix B(howmany-1,howmany);       
       for(i=0;i<howmany;i++){
         index_small[i] = index[done+i];
 				for(j=0;j<howmany-1;j++){
-					B(i,j) = Xbal(index_small[i],j)/prob[index_small[i]];
+					B(j,i) = Xbal(index_small[i],j)/prob[index_small[i]];
 				}
 				p_small[i] = p[index_small[i]];
 			}
@@ -346,8 +190,7 @@ IntegerVector cube(NumericVector prob, NumericMatrix Xbal){
           index[i] = tempInt;
           done = done + 1;
         }
-      } 
-      
+      }   
     }else{
       // max one unit left
 			if(runif(1)[0]<p[index[done]]){p[index[done]]=1;}else{p[index[done]]=0;}
@@ -367,7 +210,6 @@ IntegerVector cube(NumericVector prob, NumericMatrix Xbal){
 	return s;
 }
 
-// fixad
 // [[Rcpp::export]]
 IntegerVector lcube(NumericVector prob, NumericMatrix Xspread, NumericMatrix Xbal){
   // landing by dropping balancing variables, 
@@ -380,9 +222,6 @@ IntegerVector lcube(NumericVector prob, NumericMatrix Xspread, NumericMatrix Xba
   NumericVector p(N);
   int i,j,k,howmany,first;
   for(i=0;i<N;i++){index[i]=i; p[i]=prob[i];}  
-  IntegerVector index_small;
-  NumericVector p_small, dists;
-  NumericMatrix B;
   double eps = 1e-12;
   double d;
   // put finished units at beginning of list
@@ -405,7 +244,7 @@ IntegerVector lcube(NumericVector prob, NumericMatrix Xspread, NumericMatrix Xba
       NumericVector p_small(howmany);
       NumericVector dists(howmany,1e+200);
       IntegerVector index_small(howmany);
-      NumericMatrix B(howmany,howmany-1);     
+      NumericMatrix B(howmany-1,howmany);     
       
       for(i=done;i<N;i++){
         d = 0;
@@ -432,7 +271,7 @@ IntegerVector lcube(NumericVector prob, NumericMatrix Xspread, NumericMatrix Xba
       // cluster found, build p_small and B
       for(i=0;i<howmany;i++){
 				for(j=0;j<howmany-1;j++){
-					B(i,j) = Xbal(index_small[i],j)/prob[index_small[i]];
+					B(j,i) = Xbal(index_small[i],j)/prob[index_small[i]];
 				}
 				p_small[i] = p[index_small[i]];
 			}
@@ -449,8 +288,7 @@ IntegerVector lcube(NumericVector prob, NumericMatrix Xspread, NumericMatrix Xba
           index[i] = tempInt;
           done = done + 1;
         }
-      } 
-      
+      }  
     }else{
       // max one unit left
 			if(runif(1)[0]<p[index[first]]){p[index[first]]=1;}else{p[index[first]]=0;}
@@ -470,7 +308,6 @@ IntegerVector lcube(NumericVector prob, NumericMatrix Xspread, NumericMatrix Xba
 	return s;
 }
 
-// fixad
 // [[Rcpp::export]]
 NumericVector flightphase(NumericVector prob, NumericMatrix Xbal){
   int N = prob.size();
@@ -480,9 +317,6 @@ NumericVector flightphase(NumericVector prob, NumericMatrix Xbal){
   NumericVector p(N);
   int i,j,k,howmany;
   for(i=0;i<N;i++){index[i]=i; p[i]=prob[i];}  
-  //IntegerVector index_small;
-  //NumericVector p_small, dists;
-  //NumericMatrix B;
   double eps = 1e-12;
   int done = 0, tempInt, howlong;
   // randomize order of index list
@@ -513,11 +347,11 @@ NumericVector flightphase(NumericVector prob, NumericMatrix Xbal){
       NumericVector p_small(howmany);
       NumericVector dists(howmany,1e+200);
       IntegerVector index_small(howmany);
-      NumericMatrix B(howmany,howmany-1);       
+      NumericMatrix B(howmany-1,howmany);       
       for(i=0;i<howmany;i++){
         index_small[i] = index[done+i];
 				for(j=0;j<howmany-1;j++){
-					B(i,j) = Xbal(index_small[i],j)/prob[index_small[i]];
+					B(j,i) = Xbal(index_small[i],j)/prob[index_small[i]];
 				}
 				p_small[i] = p[index_small[i]];
 			}
@@ -535,8 +369,7 @@ NumericVector flightphase(NumericVector prob, NumericMatrix Xbal){
           index[i] = tempInt;
           done = done + 1;
         }
-      } 
-      
+      }      
     }else{
       // max one unit left
 			if(runif(1)[0]<p[index[done]]){p[index[done]]=1;}else{p[index[done]]=0;}
@@ -555,7 +388,6 @@ NumericVector flightphase(NumericVector prob, NumericMatrix Xbal){
 	return p;
 }
 
-// fixad
 // [[Rcpp::export]]
 IntegerVector landingphase(NumericVector prob, NumericVector probflight, NumericMatrix Xbal){
   // landing by dropping balancing variables, 
@@ -594,11 +426,11 @@ IntegerVector landingphase(NumericVector prob, NumericVector probflight, Numeric
       NumericVector p_small(howmany);
       NumericVector dists(howmany,1e+200);
       IntegerVector index_small(howmany);
-      NumericMatrix B(howmany,howmany-1);       
+      NumericMatrix B(howmany-1,howmany);       
       for(i=0;i<howmany;i++){
         index_small[i] = index[done+i];
 				for(j=0;j<howmany-1;j++){
-					B(i,j) = Xbal(index_small[i],j)/prob[index_small[i]];
+					B(j,i) = Xbal(index_small[i],j)/prob[index_small[i]];
 				}
 				p_small[i] = p[index_small[i]];
 			}
@@ -616,8 +448,7 @@ IntegerVector landingphase(NumericVector prob, NumericVector probflight, Numeric
           index[i] = tempInt;
           done = done + 1;
         }
-      } 
-      
+      }   
     }else{
       // max one unit left
 			if(runif(1)[0]<p[index[done]]){p[index[done]]=1;}else{p[index[done]]=0;}
@@ -636,7 +467,6 @@ IntegerVector landingphase(NumericVector prob, NumericVector probflight, Numeric
   return as<IntegerVector>(p);
 }
 
-// fixad
 // [[Rcpp::export]]
 NumericVector lcubeflightphase(NumericVector prob, NumericMatrix Xspread, NumericMatrix Xbal){    
   int N = prob.size();
@@ -647,9 +477,6 @@ NumericVector lcubeflightphase(NumericVector prob, NumericMatrix Xspread, Numeri
   NumericVector p(N);
   int i,j,k,howmany,first;
   for(i=0;i<N;i++){index[i]=i; p[i]=prob[i];}  
-  IntegerVector index_small;
-  NumericVector p_small, dists;
-  NumericMatrix B;
   double eps = 1e-11;
   double d;
   // put finished units at beginning of list
@@ -675,7 +502,7 @@ NumericVector lcubeflightphase(NumericVector prob, NumericMatrix Xspread, Numeri
       NumericVector p_small(howmany);
       NumericVector dists(howmany,1e+200);
       IntegerVector index_small(howmany);
-      NumericMatrix B(howmany,howmany-1);     
+      NumericMatrix B(howmany-1,howmany);     
       
       for(i=done;i<N;i++){
         d = 0;
@@ -702,7 +529,7 @@ NumericVector lcubeflightphase(NumericVector prob, NumericMatrix Xspread, Numeri
       // cluster found, build p_small and B
       for(i=0;i<howmany;i++){
 				for(j=0;j<howmany-1;j++){
-					B(i,j) = Xbal(index_small[i],j)/prob[index_small[i]];
+					B(j,i) = Xbal(index_small[i],j)/prob[index_small[i]];
 				}
 				p_small[i] = p[index_small[i]];
 			}
@@ -720,7 +547,6 @@ NumericVector lcubeflightphase(NumericVector prob, NumericMatrix Xspread, Numeri
           done = done + 1;
         }
       }
-      
     }else{
       // max one unit left
 			if(runif(1)[0]<p[index[first]]){p[index[first]]=1;}else{p[index[first]]=0;}
@@ -739,7 +565,6 @@ NumericVector lcubeflightphase(NumericVector prob, NumericMatrix Xspread, Numeri
   return p;
 }
 
-// fixad
 // [[Rcpp::export]]
 IntegerVector lcubelandingphase(NumericVector prob, NumericVector probflight, NumericMatrix Xspread, NumericMatrix Xbal){
   // landing by dropping balancing variables, 
@@ -752,9 +577,6 @@ IntegerVector lcubelandingphase(NumericVector prob, NumericVector probflight, Nu
   NumericVector p(N);
   int i,j,k,howmany,first;
   for(i=0;i<N;i++){index[i]=i; p[i]=probflight[i];}  
-  IntegerVector index_small;
-  NumericVector p_small, dists;
-  NumericMatrix B;
   double eps = 1e-12;
   double d;
   // put finished units at beginning of list
@@ -777,7 +599,7 @@ IntegerVector lcubelandingphase(NumericVector prob, NumericVector probflight, Nu
       NumericVector p_small(howmany);
       NumericVector dists(howmany,1e+200);
       IntegerVector index_small(howmany);
-      NumericMatrix B(howmany,howmany-1);     
+      NumericMatrix B(howmany-1,howmany);     
       
       for(i=done;i<N;i++){
         d = 0;
@@ -804,7 +626,7 @@ IntegerVector lcubelandingphase(NumericVector prob, NumericVector probflight, Nu
       // cluster found, build p_small and B
       for(i=0;i<howmany;i++){
 				for(j=0;j<howmany-1;j++){
-          B(i,j) = Xbal(index_small[i],j)/prob[index_small[i]];
+          B(j,i) = Xbal(index_small[i],j)/prob[index_small[i]];
 				}
 				p_small[i] = p[index_small[i]];
 			}
@@ -821,8 +643,7 @@ IntegerVector lcubelandingphase(NumericVector prob, NumericVector probflight, Nu
           index[i] = tempInt;
           done = done + 1;
         }
-      } 
-      
+      }    
     }else{
       // max one unit left
 			if(runif(1)[0]<p[index[first]]){p[index[first]]=1;}else{p[index[first]]=0;}
@@ -971,18 +792,16 @@ IntegerVector lcubestratified(NumericVector prob, NumericMatrix Xspread, Numeric
   } 
   // 2. run flight on full population
   NumericVector p_star_star = lcubeflightphase(p_star,Xspread,x_star);
-  //return landingphase(p_star,p_star_star,x_star);
   // 3. run landing in each stratum
   for(h=0;h<H;h++){
     IntegerVector ih = strataIndex[h];
     nh = counts[h];
     NumericVector ph_flight(nh);
-    //NumericMatrix xh(nh,naux);
-    NumericMatrix xh(nh,1);
+    NumericMatrix xh(nh,naux);
     IntegerVector sh(nh);
     for(i=0;i<nh;i++){
-      xh(i,0) = p_star_star[ih[i]]; //Xbal(ih[i],_)*(p_star_star[ih[i]]/prob[ih[i]]);
-      ph_flight[i]=p_star_star[ih[i]];
+      xh(i,_) = Xbal(ih[i],_)*(p_star_star[ih[i]]/prob[ih[i]]);
+      ph_flight[i] = p_star_star[ih[i]];
     }
     sh = landingphase(ph_flight,ph_flight,xh);
     for(i=0;i<nh;i++){
@@ -991,4 +810,3 @@ IntegerVector lcubestratified(NumericVector prob, NumericMatrix Xspread, Numeric
   }
   return as<IntegerVector>(p_star_star);
 }
-
