@@ -1,28 +1,34 @@
-/* Copyright (c) 2015  Jonathan Lisic 
- * Last edit: 15/07/08 - 11:45:28
- * License: BSD 3-Clause
+/* Copyright (c) 2016  Jonathan Lisic 
+ * Last edit: 
+ * License: GPL V3 
  */  
 
-#include "kdtree_lpm.h"
 
+#include "kdtree_lpm.h"
+#include "median.h"
 
 /* printf fixing */
 #ifdef CLI 
  #define PRINTF printf
+ #define RUNIF (double) rand() / RAND_MAX  
 #else 
  #include "R.h"
  #include "Rmath.h"
  #define PRINTF Rprintf
+ #define RUNIF runif(0.0,1.0)
 #endif
 
-/* function to create a new Tree */
+
+
+
+// function to create a new Tree 
 rootNodePtr createTree( size_t K, size_t leafSize, size_t n, double * data ) {
   
   rootNodePtr y = malloc( sizeof( rootNode ) );
   
   y->pointerIndex = calloc( n, sizeof( size_t * ) );
 
-  /* setup root node */
+  // setup root node 
   y->K = K;
   y->leafSize = leafSize;
   y->root = NULL;
@@ -33,12 +39,15 @@ rootNodePtr createTree( size_t K, size_t leafSize, size_t n, double * data ) {
 }
 
 
-/* function to create a new Tree */
+
+
+// function to create a new Tree 
 void deleteTree( rootNodePtr r ) {
  
   if(r->pointerIndex != NULL) free( r->pointerIndex ); 
   r->pointerIndex = NULL;
- 
+  r->data = NULL;
+    
   deleteNode( r, r->root ); 
 
   free(r);
@@ -46,129 +55,92 @@ void deleteTree( rootNodePtr r ) {
 }
 
 
-/* add an element to the tree */
-void buildIndex( rootNodePtr r, nodePtr c, nodePtr p ) {
+
+
+// add an element to the tree 
+nodePtr buildIndex( 
+    rootNodePtr r,      // root pointer 
+    size_t dim,         // current dim
+    size_t m,           // current length of obs
+    size_t * indexPtr   // pointer to obs indexes 
+  ) {
  
-  size_t i,k; 
-  size_t K, n, dim;
-  double * data;
+  size_t i,K; 
+  size_t * indexLeftPtr = NULL;
+  size_t * indexRightPtr = NULL;
+  size_t indexLeftSize;
+  size_t indexRightSize;
 
+  nodePtr c = createNode(r);
+  c->indexUsed = m;
+  c->index = indexPtr;
+  c->dim = dim;
 
-  /* for the root node */
-  if( c == NULL) {
-    c = createNode( r, NULL);
-    r->root = c;
-    c->indexUsed = r->n;
+  K = r->K;
+   
+  // do we have too many points? 
+  if( m <= r->leafSize ) {
 
-    K = r->K;
-    data = r->data;
-    dim =  c->dim; 
-    n = r->n;
+    // save the final pointer locations 
+    for( i = 0; i < m; i++) 
+      r->pointerIndex[ indexPtr[i] ] = &( indexPtr[i] );
 
-    // setup the index, and also ensure that we have finite bounds
-    for(i = 0; i < n; i++) {
-      c->index[i] = i;
-      for( k = 0; k < K; k++) {
-        if( data[ i * K + k ] < c->min[k] ) c->min[k] = data[i * K + k];  
-        if( data[ i * K + k ] > c->max[k] ) c->max[k] = data[i * K + k];  
-      }
-    }
-  }
-  nodePtr * children = NULL; // place holder
-  
-  /* do we have too many points? */
-  if( c->indexUsed < r->leafSize ) {
-
-    /* save the final pointer locations */
-    for( i = 0; i < c->indexUsed; i++) 
-      r->pointerIndex[ c->index[i] ] = &( c->index[i] );
-
-    return;
+    return c;
   } 
 
-  /* if we have too many points 
-   * create children
-   * figure out our new dim
-   * figure out what the split is
-   * move current contents to new children
-   */
-  
-//PRINTF(" so you have decided to have children\n");
-  children = createChildren( r, c, p);
-//PRINTF(" success!, they have left the house off on their own!\n");
-  c->left  = children[0];
-  c->right = children[1];
-  free(children);
-  
-  buildIndex( r, c->left, c );  
-  buildIndex( r, c->right, c );   
+  // if we are here we have too many points 
+  // create children
+  // figure out our new dim
+  // split data and give to children 
+  c-> split = splitData( 
+    r->data,
+    c->index, 
+    &indexLeftPtr,
+    &indexRightPtr,
+    &indexLeftSize,
+    &indexRightSize,
+    m, 
+    K,
+    dim  
+    ); 
 
-  return;
+  free(c->index);
+  c->index = NULL; 
+
+  // move current contents to new children
+  c->left  = buildIndex( r, (dim+1) % K, indexLeftSize , indexLeftPtr);
+  c->right = buildIndex( r, (dim+1) % K, indexRightSize, indexRightPtr);
+
+  return c;
 }
 
 
 
 
-/* double comparison function for qsort */
-int comp ( const void * a, const void * b ) {
-
-  double aDbl = *((double*) a);
-  double bDbl = *((double*) b);
-
-  if( aDbl > bDbl) return 1;
-  if( aDbl < bDbl) return -1;
-
-  return 0;
-}
-
-
-/* double * comparison function for qsort */
-int compareDoublePtr ( const void * aPtr, const void * bPtr ) {
-  double a = **(double **) aPtr;
-  double b = **(double **) bPtr; 
-  if (a < b) return -1;
-  if (a > b) return  1; 
-  return 0; 
-}
-
-
-/* function to create a simple node */
-nodePtr createNode( rootNodePtr r, nodePtr p ) {
-
-  size_t i;
+// function to create a simple node 
+nodePtr createNode( rootNodePtr r ) {
 
   nodePtr c = malloc( sizeof( node ) );
 
-  if( p != NULL) {
-    c->index = calloc( p->indexUsed/2 +1, sizeof(size_t));
-  } else {
-    c->index = calloc( r->n, sizeof(size_t));
-  }
-  c->head  = p;
+  c->index = NULL;
   c->left  = NULL;
   c->right = NULL;
   c->indexUsed = 0;
   c->split = 0;
   c->dim = 0;
 
-  c->min = calloc( r->K, sizeof(double));
-  c->max = calloc( r->K, sizeof(double));
-  for( i = 0; i < r->K; i++) {
-    (c->max)[i] = -INFINITY;
-    (c->min)[i] = INFINITY;
-  }
   return(c);
 }
 
 
-/* function to delete a node */
+
+
+// function to delete a node 
 void deleteNode( rootNodePtr r, nodePtr c ) {
 
   if( c == NULL ) return;
 
   if( c->index != NULL) free(c->index);
-  if( c->min != NULL) free(c->min);
-  if( c->max != NULL) free(c->max);
 
   // to the left
   if( c->left != NULL ) {
@@ -188,102 +160,59 @@ void deleteNode( rootNodePtr r, nodePtr c ) {
 }
 
 
-/* split and create children from a *full* node */
-nodePtr * createChildren( rootNodePtr r, nodePtr c, nodePtr p) {
-
-  double * x = NULL;
-  double ** xPtr = NULL;
-  size_t i;
-  size_t splitIndex;
-  nodePtr * children = NULL;
-
-  if( p != NULL) {
-    c->dim = (p->dim + 1) % r->K; //increment mod K 
-  } else {
-    c->dim = 0;
-  }
 
 
+// split and create children
+double splitData( 
+    double * y,
+    size_t * index, 
+    size_t ** indexLeft,
+    size_t ** indexRight,
+    size_t * indexLeftSize,
+    size_t * indexRightSize,
+    size_t n, 
+    size_t p,
+    size_t dim 
+    ) {
 
-  /***********************************************************************************************************/
+  double split;
+  size_t splitIndex,i;
 
-  /* get the median */
-  x =  calloc( c->indexUsed, sizeof(double) ); //allocate some temporary space for finding the median
-  xPtr =  calloc( c->indexUsed, sizeof( double * ) ); //allocate some temporary space for finding the median
-
-  /* use quick sort to find the median */
-  for( i = 0; i < c->indexUsed; i++) {
-    x[i] = r->data[ c->index[i] * r->K + c->dim];
-    xPtr[i] = &x[i];
-  }  
-
-  qsort( xPtr, c->indexUsed, sizeof( double * ), compareDoublePtr);  
-
-  /* update min and max */
-  c->min[c->dim] = *(xPtr[0]);
-  c->max[c->dim] = *(xPtr[c->indexUsed - 1]);
-
-  // get split
-  splitIndex = c->indexUsed/2;
-  if( c->indexUsed % 2 ) {  // is not even
-    //splitIndex = c->indexUsed/2;
-    c->split = *xPtr[splitIndex];
-  } else {
-    c->split = ( *xPtr[ splitIndex ] + *xPtr[ splitIndex - 1 ] )/2.0;
-  }
-    
-  /***********************************************************************************************************/
-
-
-  children = calloc( 2, sizeof( nodePtr ) );
+  // get the median 
+  double * x =  calloc( n, sizeof(double) );        //allocate some temporary space for finding the median
+  double ** xPtr =  calloc( n, sizeof( double * ) ); //allocate some temporary space for finding the median
   
-  /* allocate some memory for children */ 
-  children[0] = createNode( r, c );
-
-  /* create right node from parent */
-  children[1] = createNode( r, c );
-
-
-  /* we are using the middle index value so we know the new size */
-  children[0]->indexUsed = splitIndex;
-  children[1]->indexUsed = c->indexUsed - splitIndex;
-
-  /* now let's have some fun with pointer math */
-  for( i = 0; i < splitIndex; i++) {
-//    PRINTF("Left: (%p) %d: %d %d %d\n", (void *) c, (int) i,(int) c->index[xPtr[i] - x], (int) (xPtr[i]  - x), (int) c->index[i] );
-    children[0]->index[i] = c->index[xPtr[i] - x];
+  // create input for qsort
+  for( i = 0; i < n; i++) {
+    x[i] = y[ index[i] * p + dim];
+    xPtr[i] = &(x[i]);
   }
-  for( i = splitIndex; i < c->indexUsed; i++) {
-//    PRINTF("Right: (%p) %d: %d %d %d\n", (void *) c, (int) i,(int) c->index[xPtr[i] - x], (int) (xPtr[i]  - x), (int) c->index[i] );
-    children[1]->index[i -splitIndex] = c->index[ xPtr[i] -x ];
-  }
-
-  for( i = 0; i < r->K; i ++ ) {
-    if ( i == c->dim ) {
-      (children[0]->max)[i] = c->split; 
-      (children[1]->min)[i] = c->split; 
-    } else {
-      (children[0]->max)[i] = c->max[i]; 
-      (children[1]->min)[i] = c->min[i]; 
-    }
-    (children[1]->max)[i] = c->max[i]; 
-    (children[0]->min)[i] = c->min[i]; 
-  }
+  // use quick sort to find the median 
+  // get split
+  splitIndex = n/2;
+  
+  split = quantile_quickSelectIndex( xPtr, splitIndex, n ); 
+    
+  *indexLeftSize  = n / 2;
+  *indexRightSize = n - *indexLeftSize;
+  
+  *indexLeft  = calloc(*indexLeftSize , sizeof(size_t) );
+  *indexRight = calloc(*indexRightSize , sizeof(size_t) );
+    
+  // now let's have some fun with pointer math 
+  for( i = 0; i < *indexLeftSize ; i++) (*indexLeft)[i]  = index[xPtr[i] - x];
+  for( i = 0; i < *indexRightSize; i++) (*indexRight)[i] = index[ xPtr[*indexLeftSize + i] -x ];
   
   free(xPtr);
   free(x); 
 
-  free( c->index );
-  c->index = NULL;
-
-  return( children );
-
+  return split;
 }
 
 
 
 
-/* a function to print the tree */
+// a function to print the tree 
 void printTree( rootNodePtr r, nodePtr c ) {
 
   size_t i;
@@ -293,10 +222,6 @@ void printTree( rootNodePtr r, nodePtr c ) {
     for( i=0; i < c->indexUsed; i++) PRINTF("%d ", (int) c->index[i]); 
   } 
   PRINTF("\n\tleft: %p right %p (split = %f) \n", (void *) c->left, (void*) c->right, c->split );
-  PRINTF("\n  min= ");
-  for( i = 0; i < r->K; i++) PRINTF("%f ",c->min[i] );
-  PRINTF("\n  max= ");
-  for( i = 0; i < r->K; i++) PRINTF("%f ",c->max[i] );
   PRINTF("\n");
 
   if( c->left ) {
@@ -313,203 +238,323 @@ void printTree( rootNodePtr r, nodePtr c ) {
 
 
 
-/* function to find the minimal Euclidian distance */
-size_t getClosest( rootNodePtr r, nodePtr c, size_t item, double * dist  ) {
+
+// function to find the minimal Euclidian distance 
+size_t getClosestTie( 
+    rootNodePtr r, 
+    nodePtr c, 
+    size_t query, 
+    double * queryPoint,
+    double * dist, 
+    double * tieBreak 
+  ) {
 
   size_t i,j,d;
   size_t closestIndex = r->n;
 
   size_t K = r->K;
-  double * x = r->data;
-  double * y = &(r->data[item*K]);
-  double currentDist;
-
-//PRINTF("  getClosest: c->indexUsed = %d\n", (int) c->indexUsed );
-
-  for( i = 0; i < c->indexUsed; i++) {
-
-    currentDist = 0;
-  
-    j = c->index[i]; 
-
-//PRINTF("  getClosest: Checking %d against %d", (int) j, (int) item);
-
-    // check if it's a valid index 
-    if( j  >= r->n) {
-//PRINTF(" Not Valid\n");
-      continue;  
-    }
-    // don't match what we are not looking for
-    if( j == item ) {
-//PRINTF(" Equal to Item\n");
-      continue; 
-    } 
-
-    for( d = 0; d < K; d++) currentDist += (x[j * K + d] - y[d]) * (x[j*K + d] - y[d]);  //calculate distance
-    
-//PRINTF(" dist = %f", currentDist);
-
-    if( currentDist < *dist ) {
-      *dist = currentDist; 
-      closestIndex = i;
-//PRINTF(" newMin! ");
-    }
-//PRINTF("\n");
-
-
-  }
-
-  if( closestIndex < r->n ) {
-    return( c->index[closestIndex] );
-  }
-
-  return( r->n );
-}
-
-
-
-/* function to find the minimal Euclidian distance */
-size_t getClosestTie( rootNodePtr r, nodePtr c, size_t item, double * dist, double * tieBreak  ) {
-
-  size_t i,j,d;
-  size_t closestIndex = r->n;
-
-  size_t K = r->K;
-  double * x = r->data;
-  double * y = &(r->data[item*K]);
+  double * x = r->data;            
   double currentDist;
   double newTieBreak;
+  double tmp;
 
-//PRINTF("  getClosest: c->indexUsed = %d\n", (int) c->indexUsed );
-
+  // iterate over all obs on the leaf 
   for( i = 0; i < c->indexUsed; i++) {
 
-    currentDist = 0;
-  
+    // get first index 
     j = c->index[i]; 
-
-//PRINTF("  getClosest: Checking %d against %d", (int) j, (int) item);
-
-    // check if it's a valid index 
-    if( j  >= r->n) {
-//PRINTF(" Not Valid\n");
-      continue;  
-    }
-    // don't match what we are not looking for
-    if( j == item ) {
-//PRINTF(" Equal to Item\n");
-      continue; 
-    } 
-
-    for( d = 0; d < K; d++) currentDist += (x[j * K + d] - y[d]) * (x[j*K + d] - y[d]);  //calculate distance
     
-//PRINTF(" dist = %f", currentDist);
+    // check if it's a valid index 
+    if( j  >= r->n) continue;  
+    
+    // don't match what we are not looking for
+    if( j == query ) continue; 
 
+    // calculate distance
+    for( d=0, currentDist=0; d < K; d++) { 
+      tmp = x[j * K + d] - queryPoint[d];
+      tmp *= tmp;
+      currentDist += tmp;
+    }
+   
+    // if smaller than prior index update 
     if( currentDist < *dist ) {
       *dist = currentDist; 
       closestIndex = i;
+      *tieBreak = -1;  // set no tie
+
+    // if it is a tie
     } else if( currentDist == *dist ) {
-      newTieBreak = runif(0.0,1.0);
+    
+      // generate a deviate on (0,1) and pick the biggest
+      // each obs has the same prob of being largest due
+      // to exchangability  
+      newTieBreak = RUNIF;
+
+      if( *tieBreak < 0 ) *tieBreak = RUNIF;  // if no tie was set
+
       if( newTieBreak > *tieBreak) *tieBreak = newTieBreak;
       closestIndex = i;
     }
-
-
   }
 
-  if( closestIndex < r->n ) {
+  // return the new index if a new NN is found
+  if( closestIndex < r->n ) 
     return( c->index[closestIndex] );
-  }
 
+  // if no NN is found return n
   return( r->n );
 }
 
 
 
-/* find the nearest neighbor that is not a specific index */
-/* bound should be first set to the value of the node you are trying to find a neighbor for */
-void find_nn_notMe( rootNodePtr r, nodePtr c, size_t item, double * dist, size_t * query, double * queryPoint, double * tieBreak ) {
 
-//PRINTF("Entering %p\n", c);
+// find the nearest neighbor that is not a specific index 
+// bound should be first set to the value of the node you 
+// are trying to find a neighbor for 
+size_t find_nn_notMe( 
+    rootNodePtr r, 
+    nodePtr c, 
+    size_t query, 
+    double * queryPoint, 
+    double * dist, 
+    double * tieBreak
+  ) {
+
+  double distMin;
+  size_t nn = r->n;
+  size_t nnTmp;
   
-  size_t i;
-  double distMinLeft, distMaxLeft;
-  double distMinRight, distMaxRight;
-  double boundDistLeft=INFINITY, boundDistRight=INFINITY;
-  size_t queryTmp = r->n;
+  // return if c == NULL 
+  if( c == NULL ) return (nn);
 
-
-  /* nothing to search for */
-  if( item >= r->n ) {
-//PRINTF("nothing to do \n");
-    return;
-  } 
+  // nothing to search for 
+  if( query >= (r->n) ) return (nn);
  
-  /* is there anything here ? */ 
-  if( c->index != NULL ) {
-    //queryTmp = getClosest( r, c, item, dist); 
-    queryTmp = getClosestTie( r, c, item, dist, tieBreak); 
-    if( queryTmp < r->n) *query = queryTmp;
-
-    return;
-  } 
-
-  /* move on */
-  /* get bound distance */
-
-  for(i = 0; i < r->K; i++){
-
-
-    if( c->left != NULL ) {
-      distMinLeft = queryPoint[i] - (c->left)->min[i];
-      distMinLeft *= distMinLeft;
-      
-      distMaxLeft = queryPoint[i] - (c->left)->max[i];
-      distMaxLeft *= distMaxLeft;
-
-//      Rprintf("L %d queryPoint = %f, min %f, max %f, distMin %f, distMax %f\n", 
-//          (int) i, queryPoint[i], (c->left)->min[i], (c->left)->max[i], distMinLeft, distMaxLeft); 
-
-      if( distMinLeft < distMaxLeft ) {
-        if( boundDistLeft > distMinLeft ) boundDistLeft = distMinLeft;
-      } else {
-        if( boundDistLeft > distMaxLeft ) boundDistLeft = distMaxLeft;
-      }
-    }
-
-    if( c->right != NULL ) {
-      distMinRight = queryPoint[i] - (c->right)->min[i];
-      distMinRight *= distMinRight;
-      
-      distMaxRight = queryPoint[i] - (c->right)->max[i];
-      distMaxRight *= distMaxRight;
-      
-//      Rprintf("R %d queryPoint = %f, min %f, max %f, distMin %f, distMax %f\n", 
-//          (int) i, queryPoint[i], (c->right)->min[i], (c->right)->max[i], distMinRight, distMaxRight); 
-
-      if( distMinRight < distMaxRight ) {
-        if( boundDistRight > distMinRight ) boundDistRight = distMinRight;
-      } else {
-        if( boundDistRight > distMaxRight ) boundDistRight = distMaxRight;
-      }
-    }
-
-
-  }  
-    
-//PRINTF(" boundDist = L %f R %f ( %f )\n", boundDistLeft, boundDistRight , *dist );
-    
- 
-  /* boundary distance */
-  if( r->data[item * r->K + c->dim] <= c->split ) {
-    if( boundDistLeft <= *dist ) find_nn_notMe( r, c->left, item, dist, query, queryPoint, tieBreak );  
-    if( boundDistRight <= *dist ) find_nn_notMe( r, c->right, item, dist, query, queryPoint, tieBreak );   
+  // is there anything here ? 
+  // if there is we get the closest item 
+  if( c->index != NULL ) 
+    return( getClosestTie( r, c, query, queryPoint, dist, tieBreak) ); 
+   
+  // first check if the query point is less than split 
+  if( queryPoint[c->dim] <= c->split ) {
+      nn = find_nn_notMe( r, c->left, query, queryPoint, dist, tieBreak );  
+      // now check if there is a point in the split that can be close 
+      distMin = queryPoint[c->dim] - c->split;
+      distMin *= distMin;
+      if(distMin < *dist) {
+        nnTmp=find_nn_notMe( r, c->right, query, queryPoint, dist, tieBreak ); 
+        // if we found a new closer update our neighbor
+        if( nnTmp != r->n) nn = nnTmp;
+      } 
+  // the query point is greater than the split   
   } else {
-    if( boundDistRight <= *dist ) find_nn_notMe( r, c->right, item, dist, query, queryPoint, tieBreak );   
-    if( boundDistLeft <= *dist ) find_nn_notMe( r, c->left, item, dist, query, queryPoint, tieBreak );  
+      nn = find_nn_notMe( r, c->right, query, queryPoint, dist, tieBreak );  
+      
+      // now check if there is a point in the split that can be close 
+      distMin = queryPoint[c->dim] - c->split;
+      distMin *= distMin;
+      if(distMin < *dist) {
+        nnTmp = find_nn_notMe( r, c->left, query, queryPoint, dist, tieBreak );  
+        if( nnTmp != r->n) nn = nnTmp;
+      } 
+    }
+
+
+  return (nn);
+}
+
+
+
+
+
+// find the nearest neighbor that is not a specific index 
+// bound should be first set to the value of the node you 
+// are trying to find a neighbor for 
+size_t find_nn_notMe_count( 
+    rootNodePtr r, 
+    nodePtr c, 
+    size_t query, 
+    double * queryPoint, 
+    double * dist, 
+    double * tieBreak,
+    size_t * count,
+    size_t * maxCount
+  ) {
+
+  double distMin;
+  size_t nn = r->n;
+  size_t nnTmp;
+  
+  // return if c == NULL 
+  if( c == NULL ) return (nn);
+
+  // nothing to search for 
+  if( query >= (r->n) ) return (nn);
+
+  // exceeded count
+  if( *count >= *maxCount ) return(nn);
+ 
+  // is there anything here ? 
+  // if there is we get the closest item 
+  if( c->index != NULL ) { 
+    nn = getClosestTie( r, c, query, queryPoint, dist, tieBreak);
+    if( nn < r->n) *count = *count + 1; 
+    return(nn);
+  }
+   
+  // first check if the query point is less than split 
+  if( queryPoint[c->dim] <= c->split ) {
+      nn = find_nn_notMe_count( r, c->left, query, queryPoint, dist, tieBreak, count, maxCount );  
+      // now check if there is a point in the split that can be close 
+      distMin = queryPoint[c->dim] - c->split;
+      distMin *= distMin;
+      if(distMin < *dist) {
+        nnTmp=find_nn_notMe_count( r, c->right, query, queryPoint, dist, tieBreak,count, maxCount ); 
+        // if we found a new closer update our neighbor
+        if( nnTmp != r->n) nn = nnTmp;
+      } 
+  // the query point is greater than the split   
+  } else {
+      nn = find_nn_notMe_count( r, c->right, query, queryPoint, dist, tieBreak,count, maxCount );  
+      
+      // now check if there is a point in the split that can be close 
+      distMin = queryPoint[c->dim] - c->split;
+      distMin *= distMin;
+      if(distMin < *dist) {
+        nnTmp = find_nn_notMe_count( r, c->left, query, queryPoint, dist, tieBreak,count, maxCount );  
+        if( nnTmp != r->n) nn = nnTmp;
+      } 
+    }
+
+
+  return (nn);
+}
+
+
+
+
+// find the nearest neighbor that is not a specific index 
+// bound should be first set to the value of the node you 
+// are trying to find a neighbor for 
+size_t find_nn_notMe_dist( 
+    rootNodePtr r, 
+    nodePtr c, 
+    size_t query, 
+    double * queryPoint, 
+    double * dist, 
+    double * tieBreak,
+    double * termDist 
+  ) {
+
+  double distMin;
+  size_t nn = r->n;
+  size_t nnTmp;
+  
+  // return if c == NULL 
+  if( c == NULL ) return (nn);
+
+  // nothing to search for 
+  if( query >= (r->n) ) return (nn);
+
+  // exceeded count
+  //printf(" dist = %f < tesrmDist = %f (nn=%zu)\n", *dist, *termDist, nn);
+  if( *dist < *termDist ) return(nn);
+ 
+  // is there anything here ? 
+  // if there is we get the closest item 
+  if( c->index != NULL ) 
+    return( getClosestTie( r, c, query, queryPoint, dist, tieBreak) );
+  
+   
+  // first check if the query point is less than split 
+  if( queryPoint[c->dim] <= c->split ) {
+      nn = find_nn_notMe_dist( r, c->left, query, queryPoint, dist, tieBreak, termDist);  
+      // now check if there is a point in the split that can be close 
+      distMin = queryPoint[c->dim] - c->split;
+      distMin *= distMin;
+      if(distMin < *dist) {
+        nnTmp=find_nn_notMe_dist( r, c->right, query, queryPoint, dist, tieBreak,termDist ); 
+        // if we found a new closer update our neighbor
+        if( nnTmp != r->n) nn = nnTmp;
+      } 
+  // the query point is greater than the split   
+  } else {
+      nn = find_nn_notMe_dist( r, c->right, query, queryPoint, dist, tieBreak,termDist );  
+      
+      // now check if there is a point in the split that can be close 
+      distMin = queryPoint[c->dim] - c->split;
+      distMin *= distMin;
+      if(distMin < *dist) {
+        nnTmp = find_nn_notMe_dist( r, c->left, query, queryPoint, dist, tieBreak,termDist );  
+        if( nnTmp != r->n) nn = nnTmp;
+      } 
+    }
+
+
+  return (nn);
+}
+
+
+
+
+/* test code */
+#ifdef CLI 
+int main () {
+
+  double x[20] = {
+    0.68512126, 0.3251399, // 0 8
+    0.05171296, 0.7740967, // 1 7 
+    0.74261974, 0.9242472, // 2 4
+    0.13036790, 0.3870030, // 3 6 
+    0.77980495, 0.7918827, // 4 2
+    0.01413735, 0.5849822, // 5 1 
+    0.25770368, 0.4773944, // 6 3 
+    0.09543018, 0.8095111, // 7 1 
+    0.39014922, 0.3908506, // 8 6 
+    0.32050716, 0.1994035  // 9 8 
+  };
+
+
+  size_t ncol=2;
+  size_t nrow=10;
+  size_t i;
+  size_t j;
+  double * queryPoint;
+  double dist;
+  double tieBreak;
+
+  rootNodePtr myTree = NULL;
+
+  myTree = createTree(ncol, 20, nrow, x);
+
+  // this will get freed
+  size_t * index = calloc( nrow, sizeof(size_t));
+  for( i = 0; i < nrow; i++) index[i] = i;
+
+  myTree->root = buildIndex( 
+    myTree,      // root pointer 
+    0,           // current dim
+    nrow,        // current length of obs
+    index        // pointer to obs indexes 
+  ); 
+
+  printTree( myTree, myTree->root );
+ 
+  for( i = 0; i < nrow; i++) { 
+    queryPoint = &(myTree->data[i*ncol]);
+    dist = INFINITY;
+    tieBreak = -1;
+    j = find_nn_notMe(myTree, myTree->root, i, queryPoint, &dist, &tieBreak );  
+    printf("%zu: %zu %f\n", i, j, dist );
   }
 
+  deleteTree( myTree );
 
+  return 0;
 }
+
+#endif
+
 
 

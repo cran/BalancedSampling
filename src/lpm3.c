@@ -79,26 +79,28 @@ void R_lpm3(
     double * pi,
     int * nPtr,
     int * KPtr, 
-    int * mPtr
+    int * mPtr,
+    int * algorithmPtr,
+    int * maxCountPtr,
+    double * termDist
   ) {
 
   size_t n = (size_t) * nPtr;
   size_t m = (size_t) * mPtr;
   size_t K = (size_t) * KPtr;
+  size_t maxCount = (size_t) * maxCountPtr;
   size_t i,k;
   double tieBreak; /* used to break ties */
 
   GetRNGstate();
 
-
-
-  //size_t j,l; // incrementor
   size_t j;
   size_t sampled;
   double dist;
   double * r1;
   double * r2;
-  //size_t iter; // true number of iterators
+
+  size_t count;
 
 
   /***************************** CREATE RANDOM ***************************/
@@ -108,17 +110,19 @@ void R_lpm3(
 
 
   /***************************** CREATE INDEX ****************************/
-
+  // note: treeIndex will be destroyed in creating the tree
   size_t * indexMap = (size_t *) calloc( n , sizeof( size_t ) );
+  size_t * treeIndex = (size_t *) calloc( n , sizeof( size_t ) ); 
   size_t * reverseIndexMap = (size_t *) calloc( n , sizeof( size_t ) );
   for( i=0; i< n; i++) {
     indexMap[i]=i;
+    treeIndex[i]=i;
     reverseIndexMap[i]=i;
   }
-  
   /***************************** CREATE INDEX ****************************/
 
 
+  /***************************** CREATE TREE *****************************/
   /* 
    K - dim of each element 
    m - leafSize 
@@ -126,8 +130,8 @@ void R_lpm3(
    x - data  
   */
   rootNodePtr myTree = createTree( K, m, n, x);
-
-  buildIndex( myTree, NULL, NULL); 
+ 
+  myTree->root = buildIndex( myTree, 0, n, treeIndex ); 
  
   /* generate values ahead of time to be like lpm2 */ 
   for( i = 0; i < n; i++) {
@@ -137,26 +141,63 @@ void R_lpm3(
   for( i = 0; i < n; i++) {
     r2[i] = runif(0.0,1.0);
   }
+  /***************************** CREATE TREE *****************************/
 
-  /* algorithm */
+
+  /***************************** RUN ALGORITHM ***************************/
   for( i = 0; i < n-1; i++) {
 
-    
     sampled = i + (size_t) floor( r1[i] * (n - i) );
 
     /* randomly select j */
     j = indexMap[sampled]; // j is the original index of the sampled data
 
-    if( j >=n  ) {
-      break;
-    }
-  
+    if( j >=n  ) break;
 
     // find neighbor
     dist = INFINITY;
     k = n;
-    tieBreak = runif(0.0,1.0);
-    find_nn_notMe( myTree , myTree->root, j, &dist, &k, &x[j*K], &tieBreak); 
+    tieBreak = -1;
+
+
+    /* algorithm 1 is a count bounded kdtree */
+    if( *algorithmPtr == 1 ) {
+      count = 0;
+      k = find_nn_notMe_count( 
+          myTree , 
+          myTree->root, 
+          j, 
+          &(x[j*K]), 
+          &dist, 
+          &tieBreak,
+          &count,
+          &maxCount
+          ); 
+    } else if( *algorithmPtr == 2 ) {
+    /* algorithm 2 is a distance bounded kdtree */
+      k = find_nn_notMe_dist( 
+          myTree , 
+          myTree->root, 
+          j, 
+          &(x[j*K]), 
+          &dist, 
+          &tieBreak,
+          termDist
+          ); 
+    } else {
+    /* algorithm 0 is a standard kd-tree */
+      k = find_nn_notMe( 
+          myTree , 
+          myTree->root, 
+          j, 
+          &(x[j*K]), 
+          &dist, 
+          &tieBreak
+          ); 
+    }
+
+
+
   
     /* break if an invalid neighbor is selected */
     if( k >=n  ) {
@@ -187,9 +228,8 @@ void R_lpm3(
     }
 
 
-  } // finish iteration
- 
-  /* finish */ 
+  } 
+  /***************************** RUN ALGORITHM ***************************/
 
 
   /* delete tree */

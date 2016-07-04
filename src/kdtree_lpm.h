@@ -20,9 +20,6 @@ struct node {
   size_t * index;     /* index rows for x */
   size_t indexUsed;   /* since we are using arrays, this indicates the number of elements of each array */
   double split;       /* point split on for dim */
-  double * min;       /* min value along dim */
-  double * max;       /* max value along dim */
-  struct node * head; /* used for delete heavy trees */
   struct node * left; /* values less than or equal to split */
   struct node * right; /* value greater than or equal to split */ 
 };
@@ -50,38 +47,85 @@ typedef struct rootNode * rootNodePtr;
 /* function to print a tree */
 void printTree( rootNodePtr r, nodePtr c ); 
 
-
 /* function to create a new Tree */
-rootNodePtr createTree( size_t K, size_t leafSize, size_t n, double * data );
+rootNodePtr createTree( 
+    size_t K,        // number of columns of data
+    size_t leafSize, // maximum size of leaf nodes
+    size_t n,        // number of rows of data
+    double * data    // pointer to the data
+  );
 
 /* delete tree */
 void deleteTree( rootNodePtr r );
 
 /* build index for the tree */
-void buildIndex( rootNodePtr r, nodePtr c, nodePtr p ); 
+nodePtr buildIndex( 
+    rootNodePtr r,    // root node pointer
+    size_t dim,       // dim to base next node on
+    size_t m,         // size of index
+    size_t * indexPtr // index array to add to new node
+  ); 
 
-/* qsort comparison function for doubles */
-int comp ( const void * a, const void * b ); 
+// create Node 
+nodePtr createNode( rootNodePtr r );
 
-/* qsort comparison function for double * */ 
-int compareDoublePtr ( const void * aPtr, const void * bPtr );
-
-/* create Node */
-nodePtr createNode( rootNodePtr r, nodePtr p ); 
-
-/* delete a node and all of it's children */
+// delete a node and all of it's children 
 void deleteNode( rootNodePtr r, nodePtr c ); 
 
-/* create children */
-nodePtr * createChildren( rootNodePtr r, nodePtr c, nodePtr p); 
+// split and create children
+double splitData( 
+    double * y,
+    size_t * index, 
+    size_t ** indexLeft,
+    size_t ** indexRight,
+    size_t * indexLeftSize,
+    size_t * indexRighSize,
+    size_t n, 
+    size_t p,
+    size_t dim 
+    ); 
 
-/* function to get the closest neighbor */
-size_t getClosest( rootNodePtr r, nodePtr c, size_t item, double * dist  ); 
+// function to get the closest neighbor, with tie handling 
+size_t getClosestTie( 
+    rootNodePtr r,    // rootnode ptr
+    nodePtr c,        // leaf node to search
+    size_t query,      // index of item (used to not pick self)
+    double * queryPoint,       // vector of item 
+    double * dist,    // current min dist
+    double * tieBreak // tie 
+    ); 
 
-/* function to get the closest neighbor, with tie handling */
-size_t getClosestTie( rootNodePtr r, nodePtr c, size_t item, double * dist, double * tieBreak  ); 
+// funciton to find neighbors 
+size_t find_nn_notMe( 
+    rootNodePtr r, 
+    nodePtr c, 
+    size_t query, 
+    double * queryPoint, 
+    double * dist, 
+    double * tieBreak  
+    ); 
 
-/* funciton to find neighbors */
-void find_nn_notMe( rootNodePtr r, nodePtr c, size_t item, double * dist, size_t * query, double * queryPoint, double * tieBreak  ); 
+// funciton to find neighbors fixed count
+size_t find_nn_notMe_count( 
+    rootNodePtr r, 
+    nodePtr c, 
+    size_t query, 
+    double * queryPoint, 
+    double * dist, 
+    double * tieBreak,
+    size_t * count,  
+    size_t * maxCount
+    ); 
+
+// funciton to find neighbors with min dist 
+size_t find_nn_notMe_dist( 
+    rootNodePtr r, 
+    nodePtr c, 
+    size_t query, 
+    double * queryPoint, 
+    double * dist, 
+    double * tieBreak,
+    double * termDist  
+    ); 
 
 #endif
