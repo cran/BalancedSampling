@@ -66,7 +66,7 @@ Lisic, J., Jonathan (2015)  Parcel Level Agricultural Land Cover Prediction.
   Jonathan Lisic
 }
 \examples{
-
+\dontrun{
 
 N <- 1000
 n <- 100
@@ -78,4 +78,5 @@ sampled <- lpm2_kdtree( rep(n/N,N), x)
 print("lpm2_kdtree running time")
 print(proc.time() - Cprog) 
 
+}
 }
