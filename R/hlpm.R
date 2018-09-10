@@ -1,5 +1,5 @@
 # Hierarcical local pivotal method (hlpm)
-# selects an lpm sample and split the sample
+# selects an lpm sample and splits the sample
 # into subsamples of given sizes using lpm 
 
 # **********************************************
@@ -17,7 +17,7 @@ hlpm = function(p,X,sizes){
   
   numberOfSamples = length(sizes);  # number of samples
   N = length(p);                    # population size
-  S = lpm2_kdtree(p,X);             # initial sample
+  S = SamplingBigData::lpm2_kdtree(p,X);             # initial sample
   XS = as.matrix(X[S,]);            # auxiliary for initial sample
   index = 1:length(S);              # index
   done = rep(0,length(S));          # indicator of subsampled
@@ -38,7 +38,7 @@ hlpm = function(p,X,sizes){
     Nt = length(subindex); 
     
     # sample index of subsampled units
-    St = subindex[lpm2_kdtree(rep(sizes[t]/Nt,Nt),Xt)]; 
+    St = subindex[SamplingBigData::lpm2_kdtree(rep(sizes[t]/Nt,Nt),Xt)]; 
     
     # set indicator for sampled units
     done[St] = 1; 

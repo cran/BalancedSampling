@@ -5,7 +5,7 @@
 Hierarchical local pivotal method
 }
 \description{
-Hierarchical local pivotal method (hlpm) selects an initial sample using the local pivotal method and then splits the sample into subsamples of given sizes using a successive (hierarchical) selection with the local pivotal method. Can be used with any prescribed inclusion probabilities that sum to an integer n. The sizes of the subsamples must also sum to n. Licence (GPL >=2).
+Hierarchical local pivotal method (hlpm) selects an initial sample using the local pivotal method and then splits the sample into subsamples of given sizes using a successive (hierarchical) selection with the local pivotal method. Can be used with any prescribed inclusion probabilities that sum to an integer n. The sizes of the subsamples must also sum to n. It is used to select several subsamples such that each subsample is spatially balanced and the combined sample (the union of the subsamples) is also spatially balanced. Licence (GPL >=2).
 }
 \usage{
 hlpm(p,X,sizes)
