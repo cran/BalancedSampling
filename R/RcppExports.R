@@ -57,6 +57,10 @@ scps <- function(prob, x) {
     .Call('_BalancedSampling_scps', PACKAGE = 'BalancedSampling', prob, x)
 }
 
+scps_coord <- function(prob, x, rand) {
+    .Call('_BalancedSampling_scps_coord', PACKAGE = 'BalancedSampling', prob, x, rand)
+}
+
 spm <- function(prob) {
     .Call('_BalancedSampling_spm', PACKAGE = 'BalancedSampling', prob)
 }

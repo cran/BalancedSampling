@@ -1,6 +1,6 @@
-369e674623316555e705e79f2f7a18c9 *DESCRIPTION
+4c36a042ea458d148228b63962b4467f *DESCRIPTION
 2525b279ac0acbe986ac4e213429c94b *NAMESPACE
-3e2fc847217c41dd0fb5a6b11e50fe14 *R/RcppExports.R
+418660176f95b797ebecacc31195341f *R/RcppExports.R
 04359f4319e72760d4ad7b7fe4440353 *R/hlpm.R
 df9dcc94e625337d2f53286630767573 *R/probabilities.R
 658cd148538d9f7b156ddc78a021109c *man/BalancedSampling-package.Rd
@@ -20,15 +20,16 @@ ba97c9d60ad253e73bec8afb7649706e *man/lpm1.Rd
 3f88a940f48d13891d0f1f765a59a258 *man/rpm.Rd
 64b9284fe41692d9ecb622565b2dc1d4 *man/sb.Rd
 5ae29552270aa3965db1c7417e929057 *man/scps.Rd
+5493d9cc7953467b3dbbc8d5984ea28c *man/scps_coord.Rd
 5accb08ea59abffb25a104d7dbfae073 *man/spm.Rd
 79dc5ab2ac8257ba8e3cd00a870e69e6 *man/vsb.Rd
-d6b09c9d0f5b26ae8da6862ca754eeba *src/RcppExports.cpp
+84fdffc6c89c97d0763d8eaf91a5a4d2 *src/RcppExports.cpp
 41d46c717f32b9616ba921d8d37d16c3 *src/cube.cpp
 c8ad30fe5c7373d0919ae79bb61b9e3d *src/lpm.cpp
 e174bc84233009fdef04da6e6ff79a1b *src/lpm1.cpp
 fcc460267f5e3f8015632178281210ac *src/lpm2.cpp
 4e49b39bb4c1849cfacaec794209723d *src/rpm.cpp
 25da5e8603e5fe1e8bf5f49b4b146c69 *src/sb.cpp
-0d54c81716fdf5fd896e9b2c85c6de28 *src/scps.cpp
+f9ab02dc354ea14dec8f5cbf7c23d5b6 *src/scps.cpp
 6fce170e8382b17f32f5d92ddde7611e *src/spm.cpp
 35f0400cf4b52ac76ad02e518682d589 *src/vsb.cpp
