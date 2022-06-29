@@ -33,6 +33,10 @@ lcubestratified <- function(prob, Xspread, Xbal, integerStrata) {
     .Call('_BalancedSampling_lcubestratified', PACKAGE = 'BalancedSampling', prob, Xspread, Xbal, integerStrata)
 }
 
+lcps <- function(prob, x) {
+    .Call('_BalancedSampling_lcps', PACKAGE = 'BalancedSampling', prob, x)
+}
+
 lpm <- function(prob, x, h) {
     .Call('_BalancedSampling_lpm', PACKAGE = 'BalancedSampling', prob, x, h)
 }
@@ -59,6 +63,10 @@ scps <- function(prob, x) {
 
 scps_coord <- function(prob, x, rand) {
     .Call('_BalancedSampling_scps_coord', PACKAGE = 'BalancedSampling', prob, x, rand)
+}
+
+scps_getrand <- function(prob, x, s) {
+    .Call('_BalancedSampling_scps_getrand', PACKAGE = 'BalancedSampling', prob, x, s)
 }
 
 spm <- function(prob) {

@@ -109,6 +109,18 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// lcps
+Rcpp::NumericVector lcps(Rcpp::NumericVector& prob, Rcpp::NumericMatrix& x);
+RcppExport SEXP _BalancedSampling_lcps(SEXP probSEXP, SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericVector& >::type prob(probSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix& >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(lcps(prob, x));
+    return rcpp_result_gen;
+END_RCPP
+}
 // lpm
 NumericVector lpm(NumericVector prob, NumericMatrix x, int h);
 RcppExport SEXP _BalancedSampling_lpm(SEXP probSEXP, SEXP xSEXP, SEXP hSEXP) {
@@ -195,6 +207,19 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// scps_getrand
+NumericVector scps_getrand(NumericVector prob, NumericMatrix x, NumericVector s);
+RcppExport SEXP _BalancedSampling_scps_getrand(SEXP probSEXP, SEXP xSEXP, SEXP sSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericVector >::type prob(probSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type x(xSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type s(sSEXP);
+    rcpp_result_gen = Rcpp::wrap(scps_getrand(prob, x, s));
+    return rcpp_result_gen;
+END_RCPP
+}
 // spm
 NumericVector spm(NumericVector prob);
 RcppExport SEXP _BalancedSampling_spm(SEXP probSEXP) {
@@ -229,6 +254,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BalancedSampling_lcubelandingphase", (DL_FUNC) &_BalancedSampling_lcubelandingphase, 4},
     {"_BalancedSampling_cubestratified", (DL_FUNC) &_BalancedSampling_cubestratified, 3},
     {"_BalancedSampling_lcubestratified", (DL_FUNC) &_BalancedSampling_lcubestratified, 4},
+    {"_BalancedSampling_lcps", (DL_FUNC) &_BalancedSampling_lcps, 2},
     {"_BalancedSampling_lpm", (DL_FUNC) &_BalancedSampling_lpm, 3},
     {"_BalancedSampling_lpm1", (DL_FUNC) &_BalancedSampling_lpm1, 2},
     {"_BalancedSampling_lpm2", (DL_FUNC) &_BalancedSampling_lpm2, 2},
@@ -236,6 +262,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BalancedSampling_sb", (DL_FUNC) &_BalancedSampling_sb, 3},
     {"_BalancedSampling_scps", (DL_FUNC) &_BalancedSampling_scps, 2},
     {"_BalancedSampling_scps_coord", (DL_FUNC) &_BalancedSampling_scps_coord, 3},
+    {"_BalancedSampling_scps_getrand", (DL_FUNC) &_BalancedSampling_scps_getrand, 3},
     {"_BalancedSampling_spm", (DL_FUNC) &_BalancedSampling_spm, 1},
     {"_BalancedSampling_vsb", (DL_FUNC) &_BalancedSampling_vsb, 3},
     {NULL, NULL, 0}

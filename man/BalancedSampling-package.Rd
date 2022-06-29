@@ -6,14 +6,12 @@
 Balanced and Spatially Balanced Sampling
 }
 \description{
-Select balanced and spatially balanced probability samples in multi-dimensional spaces with any prescribed inclusion probabilities. It contains fast (C++ via Rcpp) implementations of the included sampling methods. The local pivotal method and spatially correlated Poisson sampling (for spatially balanced sampling) are included. Also the cube method (for balanced sampling) and the local cube method (for doubly balanced sampling) are included. 
+Select balanced and spatially balanced probability samples in multi-dimensional spaces with any prescribed inclusion probabilities. It contains fast (C++ via Rcpp) implementations of the included sampling methods. The local pivotal method by Grafström, Lundström and Schelin (2012) and spatially correlated Poisson sampling by Grafström (2012) are included. Also the cube method (for balanced sampling) and the local cube method (for doubly balanced sampling) are included, see Grafström and Tillé (2013). 
 }
 \author{
-Anton Grafström, Jonathan Lisic
+Anton Grafström, Jonathan Lisic, Wilmer Prentius
 
 Maintainer: Anton Grafström <anton.grafstrom@gmail.com>
-
-Webpage: http://www.antongrafstrom.se/balancedsampling
 }
 \references{
 Deville, J. C. and  Tillé, Y. (2004). Efficient balanced sampling: the cube method. Biometrika, 91(4), 893-912.

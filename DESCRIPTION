@@ -1,17 +1,23 @@
 Package: BalancedSampling
 Type: Package
 Title: Balanced and Spatially Balanced Sampling
-Version: 1.5.5
-Date: 2019-03-01
-Author: Anton Grafström, Jonathan Lisic
+Version: 1.6.3
+Date: 2022-06-28
+Author: Anton Grafström, Jonathan Lisic, Wilmer Prentius
 Maintainer: Anton Grafström <anton.grafstrom@gmail.com>
-Description: Select balanced and spatially balanced probability samples in multi-dimensional spaces with any prescribed inclusion probabilities. It contains fast (C++ via Rcpp) implementations of the included sampling methods. The local pivotal method and spatially correlated Poisson sampling (for spatially balanced sampling) are included. Also the cube method (for balanced sampling) and the local cube method (for doubly balanced sampling) are included.
+Description: Select balanced and spatially balanced probability samples in multi-dimensional spaces 
+    with any prescribed inclusion probabilities. It contains fast (C++ via Rcpp) implementations of 
+    the included sampling methods. The local pivotal method by Grafström, Lundström and Schelin (2012)
+    <doi:10.1111/j.1541-0420.2011.01699.x> and spatially correlated Poisson sampling by Grafström (2012) 
+    <doi:10.1016/j.jspi.2011.07.003> are included. Also the cube method (for balanced sampling) and 
+    the local cube method (for doubly balanced sampling) are included, see Grafström and Tillé (2013) 
+    <doi:10.1002/env.2194>. 
 License: GPL (>= 2)
 Imports: Rcpp (>= 0.11.1), SamplingBigData
 LinkingTo: Rcpp
 Encoding: UTF-8
-URL: http://www.antongrafstrom.se/balancedsampling
+URL: http://www.antongrafstrom.se/balancedsampling/
 NeedsCompilation: yes
-Packaged: 2019-03-01 07:56:56 UTC; ang
+Packaged: 2022-06-29 12:29:27 UTC; ang
 Repository: CRAN
-Date/Publication: 2019-03-01 08:20:03 UTC
+Date/Publication: 2022-06-29 13:00:02 UTC

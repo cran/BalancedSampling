@@ -3,12 +3,37 @@ using namespace Rcpp;
 
 //**********************************************
 // Author: Anton Grafström
-// Last edit: 2014-05-05
+// Last edit: 2020-08-14
 // Licence: GPL (>=2)
 //**********************************************
 
 // "import" print for error checking
 Function print("print");
+
+/* Is identity function
+ * 
+ * This function test if the matrix M is identity or not.
+ * The matrix could be a n x m matrix.
+ * 
+ */
+bool isEye(NumericMatrix M){
+  bool out = true;
+  int p = M.ncol();
+  int N = M.nrow();
+  for(int i = 0;i< N; i++){
+    for(int j = 0; j < p; j++){
+      if(i == j && M(i,j) != 1){
+        out = false;
+        break;
+      }
+      if(i != j && M(i,j) != 0){
+        out = false;
+        break;
+      }
+    }
+  }
+  return out;
+}
 
 // reduced row echelon form
 void rref(NumericMatrix& M){
@@ -73,7 +98,7 @@ NumericVector onestepfastflightcube(NumericVector prob, NumericMatrix Bm){
 	// find nonzero vector u in Ker B (null space of B, i.e. Bu = 0)
 	// with both positive and negative values
 	// find reduced row echelon form of B
-	rref(Bm);
+	// rref(Bm);
 	for(i=(nrow-1);i>=0;i--){
 		// find lead (first nonzero entry on row) if exists
 		// if no lead, i.e lead = ncol, do nothing
@@ -176,6 +201,7 @@ IntegerVector cube(NumericVector prob, NumericMatrix Xbal){
 				}
 				p_small[i] = p[index_small[i]];
 			}
+      rref(B); 
       p_small = onestepfastflightcube(p_small,B);
       // update prob
 			for(i=0;i<howmany;i++){
@@ -275,6 +301,7 @@ IntegerVector lcube(NumericVector prob, NumericMatrix Xspread, NumericMatrix Xba
 				}
 				p_small[i] = p[index_small[i]];
 			}
+      rref(B); 
       p_small = onestepfastflightcube(p_small,B);
       // update prob
 			for(i=0;i<howmany;i++){
@@ -312,7 +339,9 @@ IntegerVector lcube(NumericVector prob, NumericMatrix Xspread, NumericMatrix Xba
 NumericVector flightphase(NumericVector prob, NumericMatrix Xbal){
   int N = prob.size();
   int naux = Xbal.ncol();
- 
+  
+  bool eye = false; // boolean, if matrix B is identity.
+
   IntegerVector index(N);
   NumericVector p(N);
   int i,j,k,howmany;
@@ -341,21 +370,32 @@ NumericVector flightphase(NumericVector prob, NumericMatrix Xbal){
     // find cluster of size howmany
     howmany = std::min(naux+1,N-done);
     // stop if there are less than naux units left
-    if(howmany <= naux){done=N; break;}
+    // if(howmany <= naux){done=N; break;}
  
     if( howmany > 1 ){
       NumericVector p_small(howmany);
       NumericVector dists(howmany,1e+200);
       IntegerVector index_small(howmany);
-      NumericMatrix B(howmany-1,howmany);       
+      // NumericMatrix B(howmany-1,howmany); 
+      NumericMatrix B(naux,howmany); // changed      
       for(i=0;i<howmany;i++){
         index_small[i] = index[done+i];
-				for(j=0;j<howmany-1;j++){
+				//for(j=0;j<howmany-1;j++){
+				for(j=0; j < naux;j++){
 					B(j,i) = Xbal(index_small[i],j)/prob[index_small[i]];
 				}
 				p_small[i] = p[index_small[i]];
 			}
+      //p_small = onestepfastflightcube(p_small,B);
+      rref(B); 
+      if(howmany < naux + 1){
+        eye = isEye(B);
+        if(eye == true){
+          break;
+        }
+      }
       p_small = onestepfastflightcube(p_small,B);
+      
       // update prob
 			for(i=0;i<howmany;i++){
 				p[index_small[i]] = p_small[i];
@@ -434,6 +474,7 @@ IntegerVector landingphase(NumericVector prob, NumericVector probflight, Numeric
 				}
 				p_small[i] = p[index_small[i]];
 			}
+      rref(B); 
       p_small = onestepfastflightcube(p_small,B);
       // update prob
 			for(i=0;i<howmany;i++){
@@ -533,6 +574,7 @@ NumericVector lcubeflightphase(NumericVector prob, NumericMatrix Xspread, Numeri
 				}
 				p_small[i] = p[index_small[i]];
 			}
+      rref(B); 
       p_small = onestepfastflightcube(p_small,B);
       // update prob
 			for(i=0;i<howmany;i++){
@@ -630,6 +672,7 @@ IntegerVector lcubelandingphase(NumericVector prob, NumericVector probflight, Nu
 				}
 				p_small[i] = p[index_small[i]];
 			}
+      rref(B); 
       p_small = onestepfastflightcube(p_small,B);
       // update prob
 			for(i=0;i<howmany;i++){
