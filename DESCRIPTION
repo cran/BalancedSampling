@@ -1,23 +1,25 @@
 Package: BalancedSampling
 Type: Package
 Title: Balanced and Spatially Balanced Sampling
-Version: 1.6.3
-Date: 2022-06-28
+Version: 2.0.5
+Date: 2024-02-09
 Author: Anton Grafström, Jonathan Lisic, Wilmer Prentius
 Maintainer: Anton Grafström <anton.grafstrom@gmail.com>
-Description: Select balanced and spatially balanced probability samples in multi-dimensional spaces 
-    with any prescribed inclusion probabilities. It contains fast (C++ via Rcpp) implementations of 
+Description: Select balanced and spatially balanced probability samples in multi-dimensional spaces
+    with any prescribed inclusion probabilities. It contains fast (C++ via Rcpp) implementations of
     the included sampling methods. The local pivotal method by Grafström, Lundström and Schelin (2012)
-    <doi:10.1111/j.1541-0420.2011.01699.x> and spatially correlated Poisson sampling by Grafström (2012) 
-    <doi:10.1016/j.jspi.2011.07.003> are included. Also the cube method (for balanced sampling) and 
-    the local cube method (for doubly balanced sampling) are included, see Grafström and Tillé (2013) 
-    <doi:10.1002/env.2194>. 
+    <doi:10.1111/j.1541-0420.2011.01699.x> and spatially correlated Poisson sampling by Grafström (2012)
+    <doi:10.1016/j.jspi.2011.07.003> are included. Also the cube method (for balanced sampling) and
+    the local cube method (for doubly balanced sampling) are included, see Grafström and Tillé (2013)
+    <doi:10.1002/env.2194>.
 License: GPL (>= 2)
-Imports: Rcpp (>= 0.11.1), SamplingBigData
-LinkingTo: Rcpp
+Imports: Rcpp (>= 1.0.12)
+LinkingTo: Rcpp, RcppArmadillo
 Encoding: UTF-8
-URL: http://www.antongrafstrom.se/balancedsampling/
+URL: https://www.envisim.se/,
+        https://github.com/envisim/BalancedSampling/
 NeedsCompilation: yes
-Packaged: 2022-06-29 12:29:27 UTC; ang
+RoxygenNote: 7.2.3
+Packaged: 2024-02-09 08:56:21 UTC; ang
 Repository: CRAN
-Date/Publication: 2022-06-29 13:00:02 UTC
+Date/Publication: 2024-02-23 13:10:02 UTC
