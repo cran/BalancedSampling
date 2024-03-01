@@ -44,6 +44,15 @@ IndexList* IndexList::CopyLen() {
   return il;
 }
 
+size_t* IndexList::CopyList() {
+  size_t* il = new size_t[len];
+
+  for (size_t i = 0; i < len; i++)
+    il[i] = list[i];
+
+  return il;
+}
+
 size_t IndexList::Length() {
   return len;
 }
@@ -97,6 +106,22 @@ void IndexList::Set(const size_t id) {
   reverse[id] = id;
 }
 
+void IndexList::Add(const size_t id) {
+  if (id >= capacity) {
+    throw std::range_error("(add) Inadmissible value of id");
+    return;
+  }
+
+  // k must not be smaller then len, or it already exists
+  if (reverse[id] < len) {
+    throw std::range_error("(add) Inadmissible value of k");
+  }
+
+  list[len] = id;
+  reverse[id] = len;
+  len += 1;
+}
+
 size_t IndexList::Get(const size_t k) {
   if (k >= len) {
     throw std::range_error("(get) Inadmissible value of k");
@@ -113,6 +138,14 @@ size_t IndexList::GetK(const size_t id) {
   }
 
   return reverse[id];
+}
+
+size_t IndexList::GetLast() {
+  if (len == 0) {
+    throw std::range_error("(GetLast) No last element");
+  }
+
+  return list[len - 1];
 }
 
 bool IndexList::Exists(const size_t id) {

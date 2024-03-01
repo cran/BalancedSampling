@@ -5,8 +5,9 @@
 
 void ReducedRowEchelonForm(
   double *mat,
-  const size_t rowCount,
-  const size_t colCount
+  const size_t nrows,
+  const size_t ncolumns
 );
 
 #endif
+

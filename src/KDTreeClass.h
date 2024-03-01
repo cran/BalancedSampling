@@ -29,8 +29,10 @@ public:
 
 protected:
   KDTree();
+  void Init(double*, const size_t, const size_t, const size_t, const KDTreeSplitMethod);
 public:
   KDTree(double*, const size_t, const size_t, const size_t, const KDTreeSplitMethod);
+  KDTree(double*, const size_t, const size_t, const size_t, const KDTreeSplitMethod, size_t*, size_t);
   ~KDTree();
   KDTree* Copy();
   void Prune();

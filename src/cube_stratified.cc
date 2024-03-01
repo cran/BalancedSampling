@@ -31,7 +31,7 @@ Rcpp::IntegerVector cube_stratified_cpp(
 
   cube.Run();
 
-  Rcpp::IntegerVector sample(cube.sample.begin(), cube.sample.end());
+  Rcpp::IntegerVector sample(cube.sample_.begin(), cube.sample_.end());
 
   return sample;
 }
@@ -72,7 +72,7 @@ Rcpp::IntegerVector lcube_stratified_cpp(
 
   cube.Run();
 
-  Rcpp::IntegerVector sample(cube.sample.begin(), cube.sample.end());
+  Rcpp::IntegerVector sample(cube.sample_.begin(), cube.sample_.end());
 
   return sample;
 }

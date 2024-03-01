@@ -1,8 +1,8 @@
 Package: BalancedSampling
 Type: Package
 Title: Balanced and Spatially Balanced Sampling
-Version: 2.0.5
-Date: 2024-02-09
+Version: 2.0.6
+Date: 2024-02-15
 Author: Anton Grafström, Jonathan Lisic, Wilmer Prentius
 Maintainer: Anton Grafström <anton.grafstrom@gmail.com>
 Description: Select balanced and spatially balanced probability samples in multi-dimensional spaces
@@ -20,6 +20,6 @@ URL: https://www.envisim.se/,
         https://github.com/envisim/BalancedSampling/
 NeedsCompilation: yes
 RoxygenNote: 7.2.3
-Packaged: 2024-02-09 08:56:21 UTC; ang
+Packaged: 2024-02-26 07:37:49 UTC; ang
 Repository: CRAN
-Date/Publication: 2024-02-23 13:10:02 UTC
+Date/Publication: 2024-03-01 12:12:36 UTC
